@@ -178,6 +178,7 @@ type Spinner struct {
 	Suffix     string                        // Suffix is the text appended to the indicator
 	FinalMSG   string                        // string displayed after Stop() is called
 	lastOutput string                        // last character(set) written
+	defaultColor bool
 	color      func(a ...interface{}) string // default color is white
 	Writer     io.Writer                     // to make testing better, exported so users have access. Use `WithWriter` to update after initialization.
 	active     bool                          // active holds the state of the spinner
@@ -192,6 +193,7 @@ func New(cs []string, d time.Duration, options ...Option) *Spinner {
 	s := &Spinner{
 		Delay:    d,
 		chars:    cs,
+		defaultColor: true,
 		color:    color.New(color.FgWhite).SprintFunc(),
 		mu:       &sync.RWMutex{},
 		Writer:   color.Output,
@@ -220,6 +222,7 @@ type Options struct {
 // WithColor adds the given color to the spinner.
 func WithColor(color string) Option {
 	return func(s *Spinner) {
+		s.defaultColor = false
 		s.Color(color)
 	}
 }
@@ -302,6 +305,8 @@ func (s *Spinner) Start() {
 						} else {
 							outColor = fmt.Sprintf("\r%s%s%s ", s.Prefix, s.color(s.chars[i]), s.Suffix)
 						}
+					} else if s.defaultColor {
+						outColor = fmt.Sprintf("%s%s%s ", s.Prefix, s.chars[i], s.Suffix)
 					} else {
 						outColor = fmt.Sprintf("%s%s%s ", s.Prefix, s.color(s.chars[i]), s.Suffix)
 					}
